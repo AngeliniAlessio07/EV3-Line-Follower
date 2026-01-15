@@ -41,4 +41,3 @@ Puoi modificare le costanti in `main.py` per adattare il robot alla tua pista:
 -   `GUADAGNO_KP`: Aumenta per curve più reattive, diminuisci se il robot oscilla troppo ("wobble").
 
 ---
-*Creato con ❤️ per LEGO EV3.*
