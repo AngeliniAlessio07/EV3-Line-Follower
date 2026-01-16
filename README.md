@@ -1,13 +1,16 @@
-# EV3 Proportional Line Follower 🤖
+# EV3 Proportional Line Follower con Gestione Incroci 🤖
 
-Questo progetto implementa un **Line Follower** (robot segui-linea) per LEGO Mindstorms EV3 utilizzando **MicroPython**.
+Questo progetto implementa un **Line Follower** avanzato per LEGO Mindstorms EV3 utilizzando **MicroPython**.
 
-La particolarità di questo codice è l'utilizzo di un **controllo proporzionale** basato su funzioni matematiche, evitando l'uso di lunghe catene di `if/else` per la gestione dei motori. Questo garantisce un movimento molto più fluido e preciso rispetto alla classica logica "a scatti" (line follower a stati discreti).
+A differenza dei line follower classici, questo codice utilizza una **logica RGB unificata** per gestire contemporaneamente:
+1.  **Guida Proporzionale (PID)** sulla linea.
+2.  **Rilevamento Marker Verdi** per svolte automatiche agli incroci.
 
 ## 🚀 Caratteristiche
--   **Logica Proporzionale (P-Controller)**: La velocità di sterzata è calcolata in base alla differenza di luce letta dai sensori. Più il robot è fuori linea, più agisce correggendo la traiettoria.
--   **Guida Differenziale**: Modula la velocità dei singoli motori (accelera quello esterno, rallenta quello interno) per curve morbide.
--   **Codice Funzionale**: Strutturato in funzioni pure (`calcola_errore`, `calcola_velocita`) per massima chiarezza e manutenibilità.
+-   **Sensore RGB Unificato**: Utilizza la modalità `rgb()` per leggere colore e luminosità in un unico ciclo, eliminando la latenza del cambio modalità sensore.
+-   **Guida Fluida**: Calcola la luminosità media `(R+G+B)/3` per un controllo proporzionale preciso.
+-   **Gestione Incroci (Verde)**: Rileva marker verdi a destra o sinistra e **esegue automaticamente svolte a 90°**.
+-   **Priorità di Azione**: Il rilevamento del verde ha priorità sulla guida, prevenendo errori di sterzata quando si passa sopra i marker colorati.
 
 ## 🛠️ Hardware Richiesto
 -   **LEGO Mindstorms EV3 Brick**
@@ -19,15 +22,18 @@ La particolarità di questo codice è l'utilizzo di un **controllo proporzionale
     -   Destro: Porta **S4**
 
 ## ⚙️ Come Funziona
-Il nucleo del controllo risiede in questa formula:
-```python
-errore = luce_sinistra - luce_destra
-correzione = errore * GUADAGNO_KP
-
-velocita_sinistra = VELOCITA_BASE + correzione
-velocita_destra   = VELOCITA_BASE - correzione
-```
-Se il sensore sinistro vede "più bianco" del destro, il robot sterza a destra proporzionalmente all'errore, mantenendosi centrato sulla linea.
+Il robot opera in un loop continuo che:
+1.  Legge i valori **RGB** grezzi da entrambi i sensori.
+2.  **Verifica Verde**: Se la componente Verde è dominante (`G > R*1.5` e `G > B*1.5`):
+    -   Ferma i motori.
+    -   Esegue una **svolta a 90°** nella direzione del sensore (Tank Turn).
+    -   Riprende la guida.
+3.  **Guida Linea**: Se non c'è verde, calcola l'errore di luminosità:
+    ```python
+    luminosita = (r + g + b) / 3
+    errore = lum_sinistra - lum_destra
+    ```
+    E applica la correzione proporzionale ai motori.
 
 ## 📥 Installazione
 1.  Clona questo repository.
@@ -37,7 +43,12 @@ Se il sensore sinistro vede "più bianco" del destro, il robot sterza a destra p
 
 ## 📊 Calibrazione
 Puoi modificare le costanti in `main.py` per adattare il robot alla tua pista:
--   `VELOCITA_BASE`: Aumenta per andare più veloce (se la pista è semplice).
--   `GUADAGNO_KP`: Aumenta per curve più reattive, diminuisci se il robot oscilla troppo ("wobble").
 
----
+### Guida
+-   `VELOCITA_BASE` (Default: 150): Velocità di crociera.
+-   `GUADAGNO_KP` (Default: 1.2): Reattività dello sterzo. Se il robot "sculetta" (oscilla), abbassa questo valore.
+
+### Svolte
+-   `GRADI_ROTAZIONE_90` (Default: 230): **IMPORTANTE**. Questo valore determina di quanto devono girare le ruote per far ruotare il robot di 90° fisici.
+    -   Se il robot gira **troppo** (oltre 90°), **diminuisci** questo valore (es. 210).
+    -   Se il robot gira **poco** (meno di 90°), **aumenta** questo valore (es. 250).
